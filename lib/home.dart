@@ -13,12 +13,43 @@ class Home extends StatefulWidget {
 class _HomeState extends State<Home> {
   TextEditingController ipController = new TextEditingController(),
       pathController = new TextEditingController(),
-      gpioController = new TextEditingController();
+      gpioController = new TextEditingController(),
+      portController = new TextEditingController();
   Request request = Request();
-  String rString = '', result = '';
+  bool hasErr = false;
+  String rString = '';
   String errString = '';
   final dio = Dio();
-
+  List<String> itemBuilder = [
+    "0",
+    "1",
+    "2",
+    "3",
+    "4",
+    "5",
+    "6",
+    "7",
+    "8",
+    "9",
+    "10",
+    "11",
+    "12",
+    "13",
+    "14",
+    "15",
+    "16",
+    "17",
+    "18",
+    "19",
+    "20",
+    "21",
+    "22",
+    "23",
+    "24",
+    "25",
+    "26",
+    "27"
+  ];
   @override
   void initState() {
     // TODO: implement initState
@@ -28,67 +59,98 @@ class _HomeState extends State<Home> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      resizeToAvoidBottomInset: true,
+      resizeToAvoidBottomInset: false,
       appBar: AppBar(
         title: Text("Raspberry Harvest"),
       ),
-      body: Container(
-        padding: EdgeInsets.all(20),
-        child: Flex(
-          direction: Axis.vertical,
+      body: Padding(
+        padding: EdgeInsets.all(10),
+        child: Column(
           children: [
-            Expanded(
-              child: Column(
-                children: [
-                  Text("IP"),
-                  TextField(
-                    controller: ipController,
+            Flexible(
+              flex: 1,
+              child: Container(
+                padding: EdgeInsets.all(10),
+                child: TextField(
+                  decoration: InputDecoration(hintText: "IP"),
+                  controller: ipController,
+                ),
+              ),
+            ),
+            Flexible(
+              flex: 1,
+              child: Container(
+                padding: EdgeInsets.all(10),
+                child: TextField(
+                  decoration: InputDecoration(hintText: "Port"),
+                  controller: portController,
+                ),
+              ),
+            ),
+            Flexible(
+              flex: 5,
+              child: GridView.builder(
+                gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
+                    maxCrossAxisExtent: 100,
+                    childAspectRatio: 3 / 2.5,
+                    crossAxisSpacing: 2,
+                    mainAxisSpacing: 2),
+                itemCount: itemBuilder.length,
+                itemBuilder: (context, index) {
+                  return Container(
+                    decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(30),
+                        border: Border.all(width: 2, color: Colors.grey)),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        IconButton(
+                          icon: Icon(Icons.light_mode),
+                          onPressed: () async {
+                            try {
+                              await dio.post<String>(
+                                  "http://" +
+                                      ipController.text +
+                                      ":7777" +
+                                      "/" +
+                                      "toogle",
+                                  queryParameters: {
+                                    "gpio": itemBuilder[index],
+                                  }).then((r) {
+                                setState(() {
+                                  print(r.data);
+                                  rString = r.statusCode.toString() +
+                                      " - GPIO toogled";
+                                  hasErr = false;
+                                });
+                              });
+                            } catch (e) {
+                              setState(() {
+                                errString = itemBuilder[index] +
+                                    " - Error on comunication to the server";
+                                hasErr = true;
+                              });
+                              print(e);
+                            }
+                          },
+                        ),
+                        Text(itemBuilder[index])
+                      ],
+                    ),
+                  );
+                },
+              ),
+            ),
+            Flexible(
+              flex: 1,
+              child: SingleChildScrollView(
+                child: Container(
+                  padding: EdgeInsets.only(top: 5),
+                  child: Text(
+                    hasErr ? errString : rString,
+                    style: TextStyle(color: hasErr ? Colors.red : Colors.black),
                   ),
-                  Container(
-                    child: Text("PATH"),
-                  ),
-                  TextField(
-                    controller: pathController,
-                  ),
-                  Container(
-                    child: Text("GPIO"),
-                  ),
-                  TextField(
-                    controller: gpioController,
-                    keyboardType: TextInputType.number,
-                  ),
-                  Container(
-                    margin: EdgeInsets.only(top: 50),
-                  ),
-                  Text(rString.toString()),
-                  Text(errString.toString()),
-                  ElevatedButton(
-                    onPressed: () async {
-                      try {
-                        await dio.post<String>(
-                            "http://" +
-                                ipController.text +
-                                ":7777" +
-                                "/" +
-                                pathController.text,
-                            queryParameters: {
-                              "gpio": gpioController.text
-                            }).then((r) {
-                          setState(() {
-                            print(r.data);
-                            rString = r.statusCode.toString();
-                          });
-                        });
-                      } catch (e) {
-                        setState(() {
-                          errString = e.toString();
-                        });
-                        print(e);
-                      }
-                    },
-                    child: Text("Send Request"),
-                  ),
-                ],
+                ),
               ),
             ),
           ],
@@ -97,6 +159,3 @@ class _HomeState extends State<Home> {
     );
   }
 }
-
-///final fullPath = "http://"+ipController.text + "/" + pathController.text;
-//                       final queries = {"gpio":gpioController.text};
