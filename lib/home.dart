@@ -17,7 +17,7 @@ class _HomeState extends State<Home> {
       portController = new TextEditingController();
   Request request = Request();
   bool hasErr = false;
-  String rString = '';
+  List<String> rStringList = [];
   String errString = '';
   final dio = Dio();
   List<String> itemBuilder = [
@@ -66,6 +66,7 @@ class _HomeState extends State<Home> {
       body: Padding(
         padding: EdgeInsets.all(10),
         child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Flexible(
               flex: 1,
@@ -77,15 +78,18 @@ class _HomeState extends State<Home> {
                 ),
               ),
             ),
-            Flexible(
-              flex: 1,
-              child: Container(
-                padding: EdgeInsets.all(10),
-                child: TextField(
-                  decoration: InputDecoration(hintText: "Port"),
-                  controller: portController,
-                ),
-              ),
+            // Flexible(
+            //   flex: 1,
+            //   child: Container(
+            //     padding: EdgeInsets.all(10),
+            //     child: TextField(
+            //       decoration: InputDecoration(hintText: "Port"),
+            //       controller: portController,
+            //     ),
+            //   ),
+            // ),
+            Divider(
+              height: 10,
             ),
             Flexible(
               flex: 5,
@@ -119,8 +123,13 @@ class _HomeState extends State<Home> {
                                   }).then((r) {
                                 setState(() {
                                   print(r.data);
-                                  rString = r.statusCode.toString() +
-                                      " - GPIO toogled";
+                                  rStringList.insert(
+                                      0,
+                                      r.statusCode.toString() +
+                                          " - GPIO " +
+                                          itemBuilder[index] +
+                                          " toogled");
+
                                   hasErr = false;
                                 });
                               });
@@ -141,17 +150,33 @@ class _HomeState extends State<Home> {
                 },
               ),
             ),
+            Text(
+              "Histórico",
+              style: TextStyle(fontSize: 25),
+            ),
             Flexible(
-              flex: 1,
-              child: SingleChildScrollView(
-                child: Container(
-                  padding: EdgeInsets.only(top: 5),
-                  child: Text(
-                    hasErr ? errString : rString,
-                    style: TextStyle(color: hasErr ? Colors.red : Colors.black),
-                  ),
-                ),
-              ),
+              flex: 2,
+              child: hasErr
+                  ? SingleChildScrollView(
+                      child: Container(
+                          padding: EdgeInsets.only(top: 5),
+                          child: Text(
+                            errString,
+                            style: TextStyle(
+                                color: hasErr ? Colors.red : Colors.black),
+                          )),
+                    )
+                  : ListView.builder(
+                      itemCount: rStringList.length,
+                      itemBuilder: (context, ind) {
+                        return Center(
+                          child: Container(
+                            padding: EdgeInsets.all(3),
+                            child: Text(rStringList[ind]),
+                          ),
+                        );
+                      },
+                    ),
             ),
           ],
         ),
